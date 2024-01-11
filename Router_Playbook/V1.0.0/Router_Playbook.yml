@@ -5,8 +5,18 @@
   gather_facts: yes # idk if we need this so i set this to true lol :D
   become: yes
   become_method: enable
+
+  vars:
+    ansible_connection: ansible.netcommon.network_cli
+    ansible_network_os: cisco.ios.ios
+    ansible_user: user
+    ansible_password: Password123!
+    ansible_become: true
+    ansible_become_method: enable
+    ansible_become_password: Password123!
+
   tasks:
-  
+
   
 # NOTE: THIS ENTIRE SECTION IS HERE FOR REFERENCE. 
 # IT WOULD BE HERE IF YOU WERE CONFIGURING FROM SCRATCH (E.G. AFTER A WRITE ERASE)
@@ -37,32 +47,34 @@
     - name: Transfer startup config from flash to running config
       ios_command:
         commands:
-          - "copy flash:initialconf running-config"
+          - "copy flash:initialconf startup-config"
 
     - name: Reload the router
       ios_command:
         commands:
-          - "reload"
-          - "y"
+          - "reload\ny"
 
     - name: Wait for router to come back online
       wait_for_connection:
         delay: 10
-        timeout: 120
+        timeout: 600
 
-    - name: Create ACL for NAT
-      acls:
-      - name: NAT_ACL
-        acl-type: standard
-        aces:
-          - grant: permit # Permit networks for use of NAT
-            source:
-              address: 192.168.1.0
-              wildcard_bits: 0.0.0.255
-          - grant: permit
-            source:
-              address: 192.168.1.0
-              wildcard_bits: 0.0.0.255
+    - name: Create ACLs for NAT
+      cisco.ios.ios_acls:
+        config:
+          - afi: ipv4
+            acls:
+              - name: NAT_ACL
+                acl_type: standard
+                aces:
+                  - grant: permit
+                    source:
+                      address: 192.168.1.0
+                      wildcard_bits: 0.0.0.255
+                  - grant: permit
+                    source:
+                      address: 192.168.2.0
+                      wildcard_bits: 0.0.0.255
 
     - name: Configure NAT # Create NAT pool and setup NAT
       ios_config:
@@ -71,6 +83,27 @@
           - ip nat inside source list NAT_ACL pool pool1 overload # Use PAT because why not (ports don't grow on trees)
         parents: interface GigabitEthernet2
         match: exact
+
+    - name: Configure NAT 2 # Create NAT pool and setup NAT
+      ios_config:
+        lines:
+          - ip nat inside
+        parents: interface GigabitEthernet2
+        match: exact
+    
+    - name: Configure NAT 3 # Create NAT pool and setup NAT
+      ios_config:
+        lines:
+          - ip nat inside
+        parents: interface GigabitEthernet1
+        match: exact
+
+    - name: Configure NAT 4 # Create NAT pool and setup NAT
+      ios_config:
+        lines:
+          - ip nat outside
+        parents: interface GigabitEthernet3
+        match: exact    
 
     - name: Configure DNS #send all dns requests to an ACTUAL DNS Server (1.1.1.1 - Cloudflare) 
       ios_config:
