@@ -5,7 +5,7 @@
   gather_facts: yes
   tasks:
 
-#Note: This is just a test file: doesn't do anything
+#Note: This is just a test file: This is here for fallback purposes
 
 
 
