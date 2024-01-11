@@ -50,7 +50,7 @@
         delay: 10
         timeout: 120
 
-    - name : Create ACL for NAT # << Self Explanatory (Unless you don't know what an ACL is)
+    - name: Create ACL for NAT
       acls:
       - name: NAT_ACL
         acl-type: standard
