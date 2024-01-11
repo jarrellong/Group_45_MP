@@ -1,0 +1,52 @@
+pipeline {
+    agent any
+
+    environment {
+        branch - "CSR1000V-Development"
+        // Define the version number
+        version = "v1.0.0"
+        // Define the GitHub repository URL
+        githubRepoURL = "https://github.com/ZeroSighs/Group_45_MP.git"
+        // Define the file path within the repository
+        pbfilePath = "/Router_Playbook/${version}/Router_Playbook.yml"
+        htfilePath = "/Router_Playbook/hosts"
+        routerAddress = "10.0.2.3"
+    }
+
+    stages {
+        stage('Checkout from GitHub') {
+            steps {
+                script {
+                    git url: githubRepoURL, branch: branch
+                    dir("Router_Playbook/${version}") {
+                        sh "cat Router_Playbook.yml"  // Display the content of the playbook file
+                    }
+                    sh "cat Router_Playbook/hosts.ini"  // Display the content of the hosts file
+                }
+            }
+        }
+        stage('Run Ansible Playbook') {
+            steps {
+                script {
+                    // Run Ansible playbook using the specified hosts file
+                    sh "ansible-playbook -i ${htfilePath} ${pbfilePath}"
+                }
+            }
+        }
+        stage('Post-check') {
+            steps {
+                script {
+                // Perform ping test from control machine to router address after playbook
+                def pingExitCode = sh(script: "ping -c 4 ${routerAddress}", returnStatus: true)
+            
+            // Check the exit code of the ping command and fail the build if not successful
+                if (pingExitCode != 0) {
+                    currentBuild.result = "FAILURE"
+                    error("Ping test to router failed. Build marked as FAILURE.")
+                    }
+                }
+            }
+        }
+    
+    }
+}
