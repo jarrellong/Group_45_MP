@@ -1,0 +1,15 @@
+[centos]
+192.168.2.3
+[winserv]
+192.168.2.4
+[CSR1000V]
+10.0.2.3
+
+[centos1:vars]
+ansible_user=root
+ansible_password=Thisisapassword123!
+
+[centos2:vars]
+ansible_user=root
+ansible_password=Thisisapassword123!
+
