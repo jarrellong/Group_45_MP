@@ -1,0 +1,105 @@
+---
+
+- name: Configure Router for Topology
+  hosts: CSR1000V # make sure you have your router in this group
+  gather_facts: yes # idk if we need this so i set this to true lol :D
+  become: yes
+  become_method: enable
+  initialconf_filename: initialconf
+  reload_timeout: 120
+  tasks:
+  
+  
+# NOTE: THIS ENTIRE SECTION IS HERE FOR REFERENCE. 
+# IT WOULD BE HERE IF YOU WERE CONFIGURING FROM SCRATCH (E.G. AFTER A WRITE ERASE)
+# BUT THEN SSH WILL LITERALLY BREAK IF THIS IS DONE SO WE REVERT TO A SNAPSHOT WITH THIS PRECONFIGURED
+# ^^ caps so you will read it (probably)
+
+    #- name : Configure IP addresses
+      #cisco.ios-ios_l3_interfaces:
+        #config:
+          #- name: GigabitEthernet1
+            #ipv4: 
+              #- address: 192.168.1.1/24
+         # - name: GigabitEthernet2
+            #ipv4:
+              #- address: 192.168.2.1/24
+          #- name: GigabitEthernet3
+            #ipv4: 
+              #- address: 10.0.2.3/24 # This uses the network created by virtualbox. In this case, 10.0.2.1-2 is reserved
+
+
+    #- name: Configure Default Route
+      #ios_static_route:
+        #aggregate: yes
+        #prefix: 0.0.0.0
+        #mask: 0.0.0.0
+        #next_hop: 10.0.2.2  #This is the "router within virtualbox"
+
+    - name: Transfer startup config from flash to running config
+      ios_command:
+        commands:
+          - "copy flash:{{ initialconf_filename }} running-config"
+
+    - name: Reload the router
+      ios_command:
+        commands:
+          - "reload"
+          - "y"
+
+    - name: Wait for router to come back online
+      wait_for_connection:
+        delay: 10
+        timeout: "{{ reload_timeout }}"
+
+    - name : Create ACL for NAT # << Self Explanatory (Unless you don't know what an ACL is)
+      acls:
+      - name: NAT_ACL
+        acl-type: standard
+        aces:
+          - grant: permit # Permit networks for use of NAT
+            source:
+              address: 192.168.1.0
+              wildcard_bits: 0.0.0.255
+          - grant: permit
+            source:
+              address: 192.168.1.0
+              wildcard_bits: 0.0.0.255
+
+    - name: Configure NAT # Create NAT pool and setup NAT
+      ios_config:
+        lines:
+          - ip nat pool pool1 10.0.2.10 10.0.2.254 netmask 255.255.255.0
+          - ip nat inside source list NAT_ACL pool pool1 overload # Use PAT because why not (ports don't grow on trees)
+        parents: interface GigabitEthernet2
+        match: exact
+
+    - name: Configure DNS #send all dns requests to an ACTUAL DNS Server (1.1.1.1 - Cloudflare) 
+      ios_config:
+        lines:
+          - ip name-server 1.1.1.1
+          - ip domain-lookup
+          - ip dns server # Enables DNS function of the router
+
+    - name: Configure DHCP 
+      ios_config:
+        lines:
+          - ip dhcp excluded-address 192.168.2.1 192.168.2.10 # Exclude the first 10 addresses for devices that need static addresses (servers)
+          - ip dhcp pool extdhcp
+          - network 192.168.2.0 255.255.255.0 
+          - default-router 192.168.2.1
+          - dns-server 192.168.2.1 # Since we configured this router to act as a DNS forwarder server
+        match: exact
+
+    - name: Configure helper address
+      ios_config:
+        lines:
+          - ip helper-address 192.168.2.1 # tells the end devices to line up and get their ip from this shit
+        parents: interface GigabitEthernet2
+        match: exact
+
+    - name: Apply configuration
+      ansible.builtin.ios_command:
+        commands:
+          - copy running-config startup-config # dont bin whatever you configured
+  
