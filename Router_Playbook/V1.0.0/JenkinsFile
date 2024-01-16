@@ -1,0 +1,107 @@
+pipeline {
+    agent any
+
+    environment {
+        changelog = "This is an initial build"
+        branch = "CSR1000V-Development"
+        // Define the version number
+        version = "V1.0.0"
+        fallback_version = "V0.1.0"
+        // Define the GitHub repository URL
+        githubRepoURL = "https://github.com/ZeroSighs/Group_45_MP.git"
+        // Define the file path within the repository
+        pbfilePath = "${WORKSPACE}/Router_Playbook/${version}/Router_Playbook.yml"
+        htfilePath = "${WORKSPACE}/Router_Playbook/hosts"
+        routerAddress0 = "10.0.2.3"
+        routerAddress1 = "192.168.2.1"
+        routerAddress2 = "192.168.1.1"
+        githubCredentialsId = 'gitlol'
+        builderror = false
+    }
+
+    stages {
+        stage('Applying fix') {
+            steps {
+                script {
+                    sh "sudo apt install pip -y"
+                    sh "sudo pip install ansible-pylibssh --break-system-packages"
+                }
+            }
+        }
+        stage('Checkout from GitHub') {
+            steps {
+                script {
+                    git branch: "${branch}",
+                    credentialsId: "${githubCredentialsId}",
+                    url: "${githubRepoURL}"
+                    dir("Router_Playbook/${version}") {
+                        sh "cat Router_Playbook.yml"  // Display the content of the playbook file
+                        sh "cp Router_Playbook.yml ${WORKSPACE}/Router_Playbook.yml"
+                    }
+                    sh "cat Router_Playbook/hosts"
+                    sh "cp Router_Playbook/hosts ${WORKSPACE}/hosts" // Display the content of the hosts file
+                }
+            }
+        }
+        stage('Run Ansible Playbook') {
+            steps {
+                script {
+                    ansiblePlaybook disableHostKeyChecking: true, installation: 'Ansible', inventory: 'hosts', playbook: 'Router_Playbook.yml', vaultTmpPath: ''
+                }
+            }
+        }
+        stage('Post-check') {
+            steps {
+                catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+                    script {
+                    // Perform ping test from control machine to router address after playbook
+                    def pingExitCode1 = sh(script: "ping -c 4 -I enp0s3 ${routerAddress0}", returnStatus: true)
+                    def pingExitCode2 = sh(script: "ping -c 4 -I enp0s9 ${routerAddress1}", returnStatus: true)
+                    //def pingExitCode3 = sh(script: "ping -c 4 -I enp0s8 ${routerAddress2}", returnStatus: true)
+            
+                // Check the exit code of the ping command and fail the build if not successful
+                    //if (pingExitCode1 != 0 || pingExitCode2 != 0 || pingExitCode3 != 0) {
+                    if (pingExitCode1 != 0 || pingExitCode2 != 0) {
+                        currentBuild.result = "FAILURE"
+                        error("Ping test to router failed. Build marked as FAILURE.")
+                        builderror = true
+                        }
+                    }
+                }
+            }
+        }
+        
+        stage('Fallback if failed') {
+            when {
+                expression { currentBuild.resultIsWorseOrEqualTo('FAILURE') }
+            }
+            steps {
+                script {
+                    dir("Router_Playbook/${fallback_version}") {
+                        sh "cat Router_Playbook.yml"  // Display the content of the playbook file
+                        sh "cp Router_Playbook.yml ${WORKSPACE}/Router_Playbook.yml"
+                    }
+                    sh "cat Router_Playbook/hosts"
+                    sh "cp Router_Playbook/hosts ${WORKSPACE}/hosts" // Display the content of the hosts file
+                    ansiblePlaybook disableHostKeyChecking: true, installation: 'Ansible', inventory: 'hosts', playbook: 'Router_Playbook.yml', vaultTmpPath: ''
+                    echo "Build failed, configuration has been rolled back to previous version"
+                    }
+                    
+                }
+            }
+            stage('Success Notification') {
+            when {
+                expression { currentBuild.resultIsBetterOrEqualTo('SUCCESS') }
+            }
+            steps {
+                script {
+                    msg = "New successful build on Branch $branch \n Build Number: ${currentBuild.number} \n Start Time: ${new Date(currentBuild.startTimeInMillis)} \n Build Duration: ${currentBuild.duration} ms \n Changelog: $changelog"
+                    sh "curl -X POST -H 'Content-Type: application/json' -d '{\"chat_id\": \"6680816225\", \"text\": \"$msg\", \"disable_notification\": true}' https://api.telegram.org/bot6964667296:AAF8Bv8XibWEPeQ4CQCL5htOfEVJTrffhHs/sendMessage"
+                    }
+                    
+                }
+            }
+        }
+    }
+    
+
