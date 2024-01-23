@@ -28,9 +28,8 @@ app.get('/employees', (req, res) => {
   });
 });
 
-// Add a new route to fetch data from the "Department" table
-app.get('/employees', (req, res) => {
-    connection.query('SELECT * FROM Employees', (error, results, fields) => {
+app.get('/employee', (req, res) => {
+    connection.query('SELECT * FROM employees', (error, results, fields) => {
       if (error) throw error;
     
       // Render the results in the browser
@@ -38,8 +37,8 @@ app.get('/employees', (req, res) => {
     });
 });
 
-app.get('/departments', (req, res) => {
-    connection.query('SELECT * FROM Department', (error, results, fields) => {
+app.get('/department', (req, res) => {
+    connection.query('SELECT * FROM department', (error, results, fields) => {
       if (error) throw error;
     
       // Render the results in the browser
