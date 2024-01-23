@@ -28,7 +28,7 @@ const connection = mysql.createConnection({
     });
   });
 
-  const port = 3306;
+  const port = 8000;
 app.listen(port, () => {
-  console.log(`Server running on http://localhost:${3306}`);
+  console.log(`Server running on http://localhost:${8000}`);
 });
