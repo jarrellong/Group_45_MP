@@ -4,48 +4,50 @@ const mysql = require('mysql2');
 const app = express();
 
 const connection = mysql.createConnection({
-    host: 'localhost',
-    user: 'root',
-    password: 'Ohwohbuuju1',
-    database: 'simpleconnect',
-  });
+  host: 'localhost',
+  user: 'root',
+  password: 'Ohwohbuuju1',
+  database: 'simpleconnect',
+});
 
-  connection.connect((err) => {
-    if (err) {
-      console.error('Error connecting to MySQL: ' + err.stack);
-      return;
+connection.connect((err) => {
+  if (err) {
+    console.error('Error connecting to MySQL: ' + err.stack);
+    return;
+  }
+  console.log('Connected to MySQL as id ' + connection.threadId);
+});
+
+app.get('/', (req, res) => {
+  // Query the database to test connection
+  connection.query('SELECT 1', (error, results, fields) => {
+    if (error) {
+      res.status(500).send('Error connecting to the database');
+    } else {
+      res.send('Database connection successful!');
     }
-    console.log('Connected to MySQL as id ' + connection.threadId);
   });
+});
 
-// Update the route to fetch data from the "Employees" table
+// Route to display employees
 app.get('/employees', (req, res) => {
-  connection.query('SELECT * FROM Employees', (error, results, fields) => {
+  connection.query('SELECT * FROM employee', (error, results, fields) => {
     if (error) throw error;
-  
+
     // Render the results in the browser
     res.send('<h1>Employees:</h1>' + JSON.stringify(results));
   });
 });
 
-app.get('/employee', (req, res) => {
-    connection.query('SELECT * FROM employees', (error, results, fields) => {
-      if (error) throw error;
-    
-      // Render the results in the browser
-      res.send('<h1>Employees:</h1>' + JSON.stringify(results));
-    });
-});
+// Route to display departments
+app.get('/departments', (req, res) => {
+  connection.query('SELECT * FROM department', (error, results, fields) => {
+    if (error) throw error;
 
-app.get('/department', (req, res) => {
-    connection.query('SELECT * FROM department', (error, results, fields) => {
-      if (error) throw error;
-    
-      // Render the results in the browser
-      res.send('<h1>Departments:</h1>' + JSON.stringify(results));
-    });
+    // Render the results in the browser
+    res.send('<h1>Departments:</h1>' + JSON.stringify(results));
+  });
 });
-  
 
 const port = 3000;
 app.listen(port, () => {
