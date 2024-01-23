@@ -18,17 +18,37 @@ const connection = mysql.createConnection({
     console.log('Connected to MySQL as id ' + connection.threadId);
   });
 
-  app.get('/', (req, res) => {
-    // Query the database
-    connection.query('SELECT * FROM users', (error, results, fields) => {
-      if (error) throw error;
+// Update the route to fetch data from the "Employees" table
+app.get('/employees', (req, res) => {
+  connection.query('SELECT * FROM Employees', (error, results, fields) => {
+    if (error) throw error;
   
-      // Render the results in the browser
-      res.send('<h1>Users:</h1>' + JSON.stringify(results));
-    });
+    // Render the results in the browser
+    res.send('<h1>Employees:</h1>' + JSON.stringify(results));
   });
+});
 
-  const port = 3000;
+// Add a new route to fetch data from the "Department" table
+app.get('/employees', (req, res) => {
+    connection.query('SELECT * FROM Employees', (error, results, fields) => {
+      if (error) throw error;
+    
+      // Render the results in the browser
+      res.send('<h1>Employees:</h1>' + JSON.stringify(results));
+    });
+});
+
+app.get('/departments', (req, res) => {
+    connection.query('SELECT * FROM Department', (error, results, fields) => {
+      if (error) throw error;
+    
+      // Render the results in the browser
+      res.send('<h1>Departments:</h1>' + JSON.stringify(results));
+    });
+});
+  
+
+const port = 3000;
 app.listen(port, () => {
-  console.log(`Server running on http://localhost:${3000}`);
+  console.log(`Server running on http://localhost:${port}`);
 });
