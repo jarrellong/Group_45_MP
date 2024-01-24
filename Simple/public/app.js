@@ -18,6 +18,31 @@ connection.connect((err) => {
   console.log('Connected to MySQL as id ' + connection.threadId);
 });
 
+app.post('/login', (req, res) => {
+  const { username, password } = req.body;
+
+  if (!username || !password) {
+    res.status(400).send('Username and password are required');
+    return;
+  }
+
+  connection.query(
+    'SELECT * FROM users WHERE username = ? AND password = ?',
+    [username, password],
+    (error, results, fields) => {
+      if (error) {
+        res.status(500).send('Error connecting to the database');
+      } else {
+        if (results.length > 0) {
+          res.send('Login successful!');
+        } else {
+          res.status(401).send('Invalid username or password');
+        }
+      }
+    }
+  );
+});
+
 app.get('/', (req, res) => {
   // Query the database to test connection
   connection.query('SELECT 1', (error, results, fields) => {
