@@ -3,8 +3,10 @@ const mysql = require('mysql2');
 const bodyParser = require('body-parser');
 
 const app = express();
-app.use(express.static('public'));
+const port = 3000;
+
 app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.json());
 
 const connection = mysql.createConnection({
   host: 'localhost',
@@ -15,39 +17,30 @@ const connection = mysql.createConnection({
 
 connection.connect((err) => {
   if (err) {
-    console.error('Error connecting to MySQL: ' + err.stack);
+    console.error('Error connecting to MySQL database: ' + err.stack);
     return;
   }
-  console.log('Connected to MySQL as id ' + connection.threadId);
+  console.log('Connected to MySQL database');
 });
 
-// Serve static files from the "public" directory
-app.use(express.static('public'));
+app.post('/submit', (req, res) => {
+  const { topic, email, phone, message, name } = req.body;
 
-// Route to handle question submission
-app.post('/ask', (req, res) => {
-  const { question } = req.body;
+  const sql = `INSERT INTO feedback (topic, email, phone, message, name) VALUES (?, ?, ?, ?, ?)`;
+  const values = [topic, email, phone, message, name];
 
-  if (!question) {
-    res.status(400).send('Please provide a question');
-    return;
-  }
-
-  // Store the question in the database (Assuming a 'questions' table)
-  connection.query(
-    'INSERT INTO questions (question_text) VALUES (?)',
-    [question],
-    (error, results, fields) => {
-      if (error) {
-        res.status(500).send('Error storing the question in the database');
-      } else {
-        res.send('Question submitted and stored in the database!');
-      }
+  connection.query(sql, values, (err, result) => {
+    if (err) {
+      console.error('Error executing MySQL query: ' + err.stack);
+      res.status(500).send('Internal Server Error');
+      return;
     }
-  );
+
+    console.log('Feedback submitted successfully');
+    res.send('Feedback submitted successfully');
+  });
 });
 
-const port = 3000;
 app.listen(port, () => {
-  console.log(`Server running on http://localhost:${port}`);
+  console.log(`Server listening at http://localhost:${port}`);
 });
