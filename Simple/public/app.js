@@ -18,6 +18,17 @@ connection.connect((err) => {
   console.log('Connected to MySQL as id ' + connection.threadId);
 });
 
+app.get('/', (req, res) => {
+  // Query the database to test connection
+  connection.query('SELECT 1', (error, results, fields) => {
+    if (error) {
+      res.status(500).send('Error connecting to the database');
+    } else {
+      res.send('Database connection successful!');
+    }
+  });
+});
+
 app.post('/login', (req, res) => {
   const { username, password } = req.body;
 
@@ -41,17 +52,6 @@ app.post('/login', (req, res) => {
       }
     }
   );
-});
-
-app.get('/', (req, res) => {
-  // Query the database to test connection
-  connection.query('SELECT 1', (error, results, fields) => {
-    if (error) {
-      res.status(500).send('Error connecting to the database');
-    } else {
-      res.send('Database connection successful!');
-    }
-  });
 });
 
 // Route to display employees
