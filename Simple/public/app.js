@@ -1,10 +1,7 @@
 const express = require('express');
 const mysql = require('mysql2');
-const bodyParser = require('body-parser');
-const path = require('path');
 
 const app = express();
-app.use(bodyParser.urlencoded({ extended: true }));
 
 const connection = mysql.createConnection({
   host: 'localhost',
@@ -21,7 +18,6 @@ connection.connect((err) => {
   console.log('Connected to MySQL as id ' + connection.threadId);
 });
 
-app.use(express.static(path.join(__dirname, 'public')));
 
 app.get('/', (req, res) => {
   // Query the database to test connection
@@ -32,35 +28,6 @@ app.get('/', (req, res) => {
       res.send('Database connection successful!');
     }
   });
-});
-
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
-
-app.post('/login', (req, res) => {
-  const { username, password } = req.body;
-
-  if (!username || !password) {
-    res.status(400).send('Username and password are required');
-    return;
-  }
-
-  connection.query(
-    'SELECT * FROM users WHERE username = ? AND password = ?',
-    [username, password],
-    (error, results, fields) => {
-      if (error) {
-        res.status(500).send('Error connecting to the database');
-      } else {
-        if (results.length > 0) {
-          res.send('Login successful!');
-        } else {
-          res.status(401).send('Invalid username or password');
-        }
-      }
-    }
-  );
 });
 
 // Route to display employees
