@@ -46,21 +46,7 @@
     - name: Transfer startup config from flash to running config
       ios_command:
         commands:
-          - "copy flash:initialconf startup-config"
-
-    - name: Reload the router
-      ios_command:
-        commands:
-          - "reload\ny"
-    
-    - name: reset the connection
-      meta: reset_connection
-
-    - name: Wait for router to come back online
-      wait_for_connection:
-        connect_timeout: 15
-        delay: 10
-        timeout: 600
+          - "configure replace flash:initialconf"
 
     - name: Create ACLs for NAT
       cisco.ios.ios_acls:
