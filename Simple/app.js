@@ -25,7 +25,11 @@ connection.connect((err) => {
   console.log('Connected to MySQL database');
 });
 
-app.post('/submit', (req, res) => {
+app.get('/', (req, res) => {
+  res.sendFile(__dirname + '/index.html');
+});
+
+app.post('/submit-feedback', (req, res) => {
   const { question, email, phone, message, name } = req.body;
   console.log('Received form data:', { question, email, phone, message, name });
 
