@@ -26,11 +26,11 @@ connection.connect((err) => {
 });
 
 app.post('/submit', (req, res) => {
-  const { topic, email, phone, message, name } = req.body;
-  console.log('Received form data:', { topic, email, phone, message, name });
+  const { question, email, phone, message, name } = req.body;
+  console.log('Received form data:', { question, email, phone, message, name });
 
-  const sql = `INSERT INTO feedback (topic, email, phone, message, name) VALUES (?, ?, ?, ?, ?)`;
-  const values = [topic, email, phone, message, name];
+  const sql = `INSERT INTO feedback (question, email, phone, message, name) VALUES (?, ?, ?, ?, ?)`;
+  const values = [question, email, phone, message, name];
 
   connection.query(sql, values, (err, result) => {
     if (err) {
