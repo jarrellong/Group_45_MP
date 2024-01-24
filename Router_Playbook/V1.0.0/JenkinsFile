@@ -2,14 +2,16 @@ pipeline {
     agent any
 
     environment {
+        //for reference - will show in telegram build notification
         changelog = "This is an initial build"
         branch = "CSR1000V-Development"
-        // Define the version number
+        // Version number of current build
         version = "V1.0.0"
+        //version number of fallback build
         fallback_version = "V0.1.0"
-        // Define the GitHub repository URL
+        // Github Repo URL
         githubRepoURL = "https://github.com/ZeroSighs/Group_45_MP.git"
-        // Define the file path within the repository
+        // File Paths of Playbook within repository
         pbfilePath = "${WORKSPACE}/Router_Playbook/${version}/Router_Playbook.yml"
         htfilePath = "${WORKSPACE}/Router_Playbook/hosts"
         routerAddress0 = "10.0.2.3"
@@ -19,6 +21,7 @@ pipeline {
         builderror = false
     }
 
+    // install needed plugin in python environment
     stages {
         stage('Applying fix') {
             steps {
