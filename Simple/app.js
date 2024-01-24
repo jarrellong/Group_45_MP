@@ -20,13 +20,10 @@ connection.connect((err) => {
   console.log('Connected to MySQL as id ' + connection.threadId);
 });
 
+// Serve static files from the "public" directory
 app.use(express.static('public'));
 
-
-app.get('/', (req, res) => {
-  res.sendFile('index.html', { root: __dirname + '/public' });
-});
-
+// Route to handle question submission
 app.post('/ask', (req, res) => {
   const { question } = req.body;
 
