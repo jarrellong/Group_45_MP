@@ -25,13 +25,14 @@ connection.connect((err) => {
 
 app.post('/submit', (req, res) => {
   const { topic, email, phone, message, name } = req.body;
+  console.log('Received form data:', { topic, email, phone, message, name });
 
   const sql = `INSERT INTO feedback (topic, email, phone, message, name) VALUES (?, ?, ?, ?, ?)`;
   const values = [topic, email, phone, message, name];
 
   connection.query(sql, values, (err, result) => {
     if (err) {
-      console.error('Error executing MySQL query: ' + err.stack);
+      console.error('Error executing MySQL query:', err);
       res.status(500).send('Internal Server Error');
       return;
     }
