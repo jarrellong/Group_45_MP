@@ -9,11 +9,11 @@
   vars:
     ansible_connection: ansible.netcommon.network_cli
     ansible_network_os: cisco.ios.ios
-    ansible_user: '{{ lookup("env", "SSH_USER") }}'
-    ansible_password: '{{ lookup("env", "SSH_PASS") }}'
+    ansible_user: "{{ sshuser }}"
+    ansible_password: "{{ sshpass }}"
     ansible_become: true
     ansible_become_method: enable
-    ansible_become_password: '{{ lookup("env", "SSH_EN") }}'
+    ansible_become_password: "{{ sshen }}"
   tasks:
 
   
