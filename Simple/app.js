@@ -49,26 +49,6 @@ app.post('/ask', (req, res) => {
   );
 });
 
-// Route to display employees
-app.get('/employees', (req, res) => {
-  connection.query('SELECT * FROM employee', (error, results, fields) => {
-    if (error) throw error;
-
-    // Render the results in the browser
-    res.send('<h1>Employees:</h1>' + JSON.stringify(results));
-  });
-});
-
-// Route to display departments
-app.get('/departments', (req, res) => {
-  connection.query('SELECT * FROM department', (error, results, fields) => {
-    if (error) throw error;
-
-    // Render the results in the browser
-    res.send('<h1>Departments:</h1>' + JSON.stringify(results));
-  });
-});
-
 const port = 3000;
 app.listen(port, () => {
   console.log(`Server running on http://localhost:${port}`);
