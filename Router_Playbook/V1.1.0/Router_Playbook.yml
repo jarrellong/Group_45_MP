@@ -55,6 +55,7 @@
 
     - name: Wait for router to come back online
       wait_for_connection:
+        connect_timeout: 15
         delay: 10
         timeout: 600
 
