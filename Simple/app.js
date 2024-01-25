@@ -29,33 +29,19 @@ app.get('/', (req, res) => {
   res.sendFile(__dirname + '/index.html');
 });
 
-app.post('/submit', function(req, res) {
-  var question = req.body.question,
-   email = req.body.email,
-   phone = req.body.phone,
-   message = req.body.message,
-   user = req.body.user
+app.post('/submit', function (req, res) {
+  const { question, email, phone, message, user } = req.body;
   console.log('Received form data:', { question, email, phone, message, user });
 
   const query = 'INSERT INTO feedback (question, email, phone, message, user) VALUES (?, ?, ?, ?, ?)';
-  db.query(query, [question, email, phone, message, user], (err, result) => {
-    if (err) {
-      console.error('Error executing MySQL query:', err);
-      // Handle the error appropriately, e.g., send a 500 Internal Server Error response
-    } else {
-      console.log(`Logged feedback: question=${question}, email=${email}, phone=${phone}, message=${message}, user=${user}`);
-      // Send a success response to the client
-    }
-  });
-
-  connection.query(sql, values, (err, result) => {
+  connection.query(query, [question, email, phone, message, user], (err, result) => {
     if (err) {
       console.error('Error executing MySQL query:', err);
       res.status(500).send('Internal Server Error');
       return;
     }
 
-    console.log('Feedback submitted successfully');
+    console.log(`Logged feedback: question=${question}, email=${email}, phone=${phone}, message=${message}, user=${user}`);
     res.send('Feedback submitted successfully');
   });
 });
