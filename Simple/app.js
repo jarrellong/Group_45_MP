@@ -29,7 +29,7 @@ app.get('/', (req, res) => {
   res.sendFile(__dirname + '/index.html');
 });
 
-app.post('/feedback', (req, res) => {
+app.post('/submit', (req, res) => {
   const { question, email, phone, message, user } = req.body;
   console.log('Received form data:', { question, email, phone, message, user });
 
