@@ -11,7 +11,7 @@
         <h2>Feedback Form</h2>
         <form id="feedbackForm">
             <label for="question">Question Topic:</label>
-            <input type="text" id="question" name="topic" required>
+            <input type="text" id="question" name="question" required>
 
             <label for="email">Email Address:</label>
             <input type="email" id="email" name="email" required>
@@ -30,24 +30,24 @@
     </div>
 
     <script>
-      function submitForm() {
-          const form = document.getElementById('feedbackForm');
-          const formData = new FormData(form);
+        function submitForm() {
+            const form = document.getElementById('feedbackForm');
+            const formData = new FormData(form);
 
-          fetch('http://localhost:3000/submit', {
-              method: 'POST',
-              body: formData
-          })
-          .then(response => response.text())
-          .then(data => {
-              console.log(data);
-              alert('Feedback submitted successfully');
-          })
-          .catch(error => {
-              console.error('Error submitting feedback:', error);
-              alert('Error submitting feedback');
-          });
-      }
+            fetch('http://localhost:3000/feedback', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.text())
+            .then(data => {
+                console.log(data);
+                alert('Feedback submitted successfully');
+            })
+            .catch(error => {
+                console.error('Error submitting feedback:', error);
+                alert('Error submitting feedback');
+            });
+        }
     </script>
 
 </body>
