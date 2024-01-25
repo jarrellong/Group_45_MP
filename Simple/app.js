@@ -29,12 +29,16 @@ app.get('/', (req, res) => {
   res.sendFile(__dirname + '/index.html');
 });
 
-app.post('/submit', (req, res) => {
-  const { question, email, phone, message, name } = req.body;
-  console.log('Received form data:', { question, email, phone, message, name });
+app.post('/submit', function(req, res) {
+  var question = req.body.question,
+   email = req.body.email,
+   phone = req.body.phone,
+   message = req.body.message,
+   user = req.body.user
+  console.log('Received form data:', { question, email, phone, message, user });
 
-  const sql = `INSERT INTO feedback (question, email, phone, message, name) VALUES (?, ?, ?, ?, ?)`;
-  const values = [question || null, email || null, phone || null, message || null, name || null];
+  const sql = `INSERT INTO feedback (question, email, phone, message, user) VALUES (?, ?, ?, ?, ?)`;
+  const values = [question || null, email || null, phone || null, message || null, user || null];
 
   connection.query(sql, values, (err, result) => {
     if (err) {
