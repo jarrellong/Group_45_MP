@@ -5,7 +5,6 @@ const cors = require('cors');
 
 const app = express();
 const port = 3000;
-const { body, validationResult } = require('express-validator');
 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
@@ -30,32 +29,22 @@ app.get('/', (req, res) => {
   res.sendFile(__dirname + '/index.html');
 });
 
-const validateFeedbackForm = [
-  body('question').notEmpty().withMessage('Question is required'),
-  body('email').isEmail().withMessage('Invalid email address'),
-  body('phone').optional().isNumeric().withMessage('Invalid phone number'),
-  body('message').notEmpty().withMessage('Message is required'),
-  body('name').notEmpty().withMessage('Name is required'),
-];
-
-// Handle the POST request to submit feedback
-app.post('/submit', validateFeedbackForm, (req, res) => {
-  // Check for validation errors
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({ errors: errors.array() });
-  }
-
-  // Extract the validated data from the request payload
+app.post('/submit', (req, res) => {
   const { question, email, phone, message, name } = req.body;
+  console.log('Received form data:', { question, email, phone, message, name });
 
-  // Insert the feedback data into the MySQL database
-  db.query('INSERT INTO feedback (question, email, phone, message, name) VALUES (?, ?, ?, ?, ?)', [question, email, phone, message, name], (err, result) => {
+  const sql = `INSERT INTO feedback (question, email, phone, message, name) VALUES (?, ?, ?, ?, ?)`;
+  const values = [question || null, email || null, phone || null, message || null, name || null];
+
+  connection.query(sql, values, (err, result) => {
     if (err) {
-      return res.status(500).json({ error: 'Error executing MySQL query' });
+      console.error('Error executing MySQL query:', err);
+      res.status(500).send('Internal Server Error');
+      return;
     }
 
-    return res.status(200).json({ message: 'Feedback submitted successfully' });
+    console.log('Feedback submitted successfully');
+    res.send('Feedback submitted successfully');
   });
 });
 
