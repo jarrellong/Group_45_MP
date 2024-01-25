@@ -19,8 +19,8 @@ const connection = mysql.createConnection({
 
 connection.connect((err) => {
   if (err) {
-    console.error('Error connecting to MySQL database: ' + err.stack);
-    return;
+    console.error('Error connecting to MySQL database:', err.stack);
+    process.exit(1); // Exit the process if unable to connect to the database
   }
   console.log('Connected to MySQL database');
 });
@@ -33,18 +33,18 @@ app.post('/feedback', (req, res) => {
   const { question, email, phone, message, user } = req.body;
   console.log('Received form data:', { question, email, phone, message, user });
 
-  const sql = `INSERT INTO feedback (question, email, phone, message, user) VALUES (?, ?, ?, ?, ?)`;
+  const sql = 'INSERT INTO feedback (question, email, phone, message, user) VALUES (?, ?, ?, ?, ?)';
   const values = [question || null, email || null, phone || null, message || null, user || null];
 
   connection.query(sql, values, (err, result) => {
     if (err) {
       console.error('Error executing MySQL query:', err);
-      res.status(500).send('Internal Server Error');
+      res.status(500).json({ error: 'Internal Server Error' });
       return;
     }
 
     console.log('Feedback submitted successfully');
-    res.send('Feedback submitted successfully');
+    res.json({ success: 'Feedback submitted successfully' });
   });
 });
 
