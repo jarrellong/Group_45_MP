@@ -19,7 +19,7 @@ const connection = mysql.createConnection({
 
 connection.connect((err) => {
   if (err) {
-    console.error('Error connecting to MySQL database:', err);
+    console.error('Error connecting to MySQL database:', err.message);
     process.exit(1); // Terminate the application on database connection error
   }
   console.log('Connected to MySQL database');
@@ -36,7 +36,7 @@ app.post('/submit', function (req, res) {
   const query = 'INSERT INTO feedback (question, email, phone, message, user) VALUES (?, ?, ?, ?, ?)';
   connection.query(query, [question, email, phone, message, user], (err, result) => {
     if (err) {
-      console.error('Error executing MySQL query:', err);
+      console.error('Error executing MySQL query:', err.message);
       res.status(500).send('Internal Server Error');
       return;
     }
