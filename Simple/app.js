@@ -19,8 +19,8 @@ const connection = mysql.createConnection({
 
 connection.connect((err) => {
   if (err) {
-    console.error('Error connecting to MySQL database:', err.message);
-    process.exit(1); // Terminate the application on database connection error
+    console.error('Error connecting to MySQL database: ' + err.stack);
+    return;
   }
   console.log('Connected to MySQL database');
 });
@@ -29,19 +29,25 @@ app.get('/', (req, res) => {
   res.sendFile(__dirname + '/index.html');
 });
 
-app.post('/submit', function (req, res) {
-  const { question, email, phone, message, user } = req.body;
+app.post('/submit', function(req, res) {
+  var question = req.body.question,
+   email = req.body.email,
+   phone = req.body.phone,
+   message = req.body.message,
+   user = req.body
   console.log('Received form data:', { question, email, phone, message, user });
 
-  const query = 'INSERT INTO feedback (question, email, phone, message, user) VALUES (?, ?, ?, ?, ?)';
-  connection.query(query, [question, email, phone, message, user], (err, result) => {
+  const sql = `INSERT INTO feedback (question, email, phone, message, user) VALUES (?, ?, ?, ?, ?)`;
+  const values = [question || null, email || null, phone || null, message || null, user || null];
+
+  connection.query(sql, values, (err, result) => {
     if (err) {
-      console.error('Error executing MySQL query:', err.message);
+      console.error('Error executing MySQL query:', err);
       res.status(500).send('Internal Server Error');
       return;
     }
 
-    console.log(`Logged feedback: question=${question}, email=${email}, phone=${phone}, message=${message}, user=${user}`);
+    console.log('Feedback submitted successfully');
     res.send('Feedback submitted successfully');
   });
 });
