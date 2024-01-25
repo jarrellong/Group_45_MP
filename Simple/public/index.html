@@ -9,7 +9,7 @@
 <body>
     <div class="container">
         <h2>Feedback Form</h2>
-        <form id="feedbackForm" action="/feedback" method="post">
+        <form id="feedbackForm" action="/submit" method="post">
             <label for="question">Question Topic:</label>
             <input type="text" id="question" name="question" required>
 
@@ -42,7 +42,7 @@
             const form = document.getElementById('feedbackForm');
             const formData = new FormData(form);
 
-            fetch('http://localhost:3000/feedback', {
+            fetch('http://localhost:3000/submit', {
                 method: 'POST',
                 body: formData
             })
