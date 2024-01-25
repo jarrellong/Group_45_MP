@@ -37,8 +37,16 @@ app.post('/submit', function(req, res) {
    user = req.body.user
   console.log('Received form data:', { question, email, phone, message, user });
 
-  const sql = `INSERT INTO feedback (question, email, phone, message, user) VALUES (?, ?, ?, ?, ?)`;
-  const values = [question || null, email || null, phone || null, message || null, user || null];
+  const query = 'INSERT INTO feedback (question, email, phone, message, user) VALUES (?, ?, ?, ?, ?)';
+  db.query(query, [question, email, phone, message, user], (err, result) => {
+    if (err) {
+      console.error('Error executing MySQL query:', err);
+      // Handle the error appropriately, e.g., send a 500 Internal Server Error response
+    } else {
+      console.log(`Logged feedback: question=${question}, email=${email}, phone=${phone}, message=${message}, user=${user}`);
+      // Send a success response to the client
+    }
+  });
 
   connection.query(sql, values, (err, result) => {
     if (err) {
