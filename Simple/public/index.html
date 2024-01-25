@@ -50,5 +50,34 @@
         }
     </script>
 
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const submitForm = document.getElementById('submitForm');
+
+            submitForm.addEventListener('click', function () {
+                submitForm();
+            });
+        });
+
+        function submitForm() {
+            const form = document.getElementById('feedbackForm');
+            const formData = new FormData(form);
+
+            fetch('http://localhost:3000/feedback', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.text())
+            .then(data => {
+                console.log(data);
+                alert('Feedback submitted successfully');
+            })
+            .catch(error => {
+                console.error('Error submitting feedback:', error);
+                alert('Error submitting feedback');
+            });
+        }
+    </script>
+
 </body>
 </html>
