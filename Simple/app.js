@@ -29,12 +29,8 @@ app.get('/', (req, res) => {
   res.sendFile(__dirname + '/index.html');
 });
 
-app.post('/submit', function(req, res) {
-  var question = req.body.question,
-   email = req.body.email,
-   phone = req.body.phone,
-   message = req.body.message,
-   user = req.body
+app.post('/feedback', (req, res) => {
+  const { question, email, phone, message, name } = req.body;
   console.log('Received form data:', { question, email, phone, message, user });
 
   const sql = `INSERT INTO feedback (question, email, phone, message, user) VALUES (?, ?, ?, ?, ?)`;
