@@ -19,8 +19,8 @@ const connection = mysql.createConnection({
 
 connection.connect((err) => {
   if (err) {
-    console.error('Error connecting to MySQL database: ' + err.stack);
-    return;
+    console.error('Error connecting to MySQL database:', err);
+    process.exit(1); // Terminate the application on database connection error
   }
   console.log('Connected to MySQL database');
 });
