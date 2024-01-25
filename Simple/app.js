@@ -30,7 +30,7 @@ app.get('/', (req, res) => {
 });
 
 app.post('/feedback', (req, res) => {
-  const { question, email, phone, message, name } = req.body;
+  const { question, email, phone, message, user } = req.body;
   console.log('Received form data:', { question, email, phone, message, user });
 
   const sql = `INSERT INTO feedback (question, email, phone, message, user) VALUES (?, ?, ?, ?, ?)`;
