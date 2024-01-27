@@ -1,0 +1,63 @@
+pipeline {
+    agent any
+
+    environment {
+        adadmuser = ""
+        adadmpass = ""
+        aduseruser = ""
+        aduserpass = ""
+        changelog = "This is an initial build"
+        branch = "CSR1000V-Development"
+        // Define the version number
+        version = "V1.0.0"
+        fallback_version = "V1.0.0"
+        // Define the GitHub repository URL
+        githubRepoURL = "https://github.com/ZeroSighs/Group_45_MP.git"
+        // Define the file path within the repository
+        pbfilePath = "${WORKSPACE}/WinServ_Playbook/${version}/WinServ_Playbook.yml"
+        htfilePath = "${WORKSPACE}/WinServ_Playbook/hosts"
+        githubCredentialsId = 'gitlol'
+        builderror = false
+    }
+    stages {
+        
+        stage('Authenticate with Vault') {
+            steps {
+                script {
+                    
+                        withVault(configuration: [disableChildPoliciesOverride: false, engineVersion: 1, timeout: 60, vaultCredentialId: 'vault-jenkins', vaultUrl: 'http://127.0.0.1:8200'], vaultSecrets: [[path: 'secret/ad_credentials', secretValues: [[envVar: 'adadmuser', vaultKey: 'admin_username'], [envVar: 'adadmpass', vaultKey: 'admin_password'], [envVar: 'aduseruser', vaultKey: 'user_username'], [envVar: 'aduserpass', vaultKey: 'user_password']]]]) 
+                            {
+                            adadmuser = env.adadmuser
+                            adadmpass = env.adadmpass
+                            aduseruser = env.aduseruser
+                            aduserpass = env.aduserpass
+                            }
+                    }
+                }
+            }
+            
+        stage('Checkout from GitHub') {
+            steps {
+                script {
+                    git branch: "${branch}",
+                    credentialsId: "${githubCredentialsId}",
+                    url: "${githubRepoURL}"
+                    dir("WinServ_Playbook/${version}") {
+                        sh "cat WinServ_Playbook.yml"  // Display the content of the playbook file
+                        sh "cp WinServ_Playbook.yml ${WORKSPACE}/WinServ_Playbook.yml"
+                    }
+                    sh "cat WinServ_Playbook/hosts"
+                    sh "cp WinServ_Playbook/hosts ${WORKSPACE}/hosts" // Display the content of the hosts file
+                }
+            }
+        }   
+        stage('Run Ansible Playbook') {
+            steps {
+                script {
+                    ansiblePlaybook([extraVars: [adadmuser: "${adadmuser}", adadmpass: "${adadmpass}", aduseruser: "${aduseruser}", aduserpass: "${aduserpass}", ansible_user: "${adadmuser}", ansible_password: "${adadmpass}"], disableHostKeyChecking: true, installation: 'Ansible', inventory: 'hosts', playbook: 'WinServ_Playbook.yml', vaultTmpPath: ''])
+                }
+            }
+        }    
+    }  
+}
+        

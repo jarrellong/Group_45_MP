@@ -16,9 +16,16 @@
     upstream_dns_2: 8.8.4.4
   gather_facts: no
 
+# Note: 
+# This takes over 10 minutes to run. Yes, its normal
+# On a fresh installation run the Remoting Configurer script (from Ansible's Github)
+# https://github.com/ansible/ansible/blob/c99c3b2b5d396b2cc1d25ad9aa6816aa922ffbc7/examples/scripts/ConfigureRemotingForAnsible.ps1
+# Run it using this command and you will be all set
+# powershell.exe -executionpolicy unrestricted ConfigureRemotingForAnsible.ps1”
+
   tasks:
 
-  - name: Install Active Directory #Install Active Directory Service
+  - name: Install Active Directory 
     win_feature: >
          name=AD-Domain-Services
          include_management_tools=yes
@@ -26,12 +33,14 @@
          state=present
     register: result
     delegate_to: '{{ dc_address }}' 
+  
   - name: Create Domain
     win_domain: >
        dns_domain_name='{{ domain_name }}'
        safe_mode_password='{{ recovery_password }}'
     register: ad
     delegate_to: "{{ dc_address }}"
+ 
   - name: reboot server
     win_reboot:
      msg: "Installing AD. Rebooting..."
@@ -39,6 +48,9 @@
     when: ad.changed
     delegate_to: "{{ dc_address }}"
 
+# Note to self or anyone:
+# This server has to act as one of the DNS server (so its IP must be configured as DNS on the router)
+# This is to allow the domain participate to find the DC from its domain name
   - name: Set upstream DNS server 
     win_dns_client:
       adapter_names: '*'
@@ -46,6 +58,10 @@
       - '{{ upstream_dns_1 }}'
       - '{{ upstream_dns_2 }}'
     delegate_to: '{{ dc_address }}'
+
+# If you're wondering where the user info is, it is obtained from the Vault
+# The variables are passed into this from the pipeline script
+# Ask me if you want to know lol
 
   - name: Create User
     community.windows.win_domain_user:
