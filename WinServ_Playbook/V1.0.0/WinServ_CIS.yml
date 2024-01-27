@@ -1,0 +1,26 @@
+---
+
+- name: Check and Set Domain Password Policy
+  hosts: your_windows_server
+  gather_facts: true
+  tasks:
+    - name: Get domain password policy settings
+      win_shell: |
+        $policy = Get-ADDefaultDomainPasswordPolicy
+        Write-Output $policy
+      register: policy_output
+
+    - name: Display domain password policy settings
+      debug:
+        var: policy_output.stdout_lines
+
+    - name: Check if PasswordHistorySize is less than 24
+      win_shell: |
+        $matches = $null
+        if ({{ policy_output.stdout_lines[0] }} -match 'PasswordHistorySize: (\d+)') {
+            $passwordHistorySize = [int]$matches[1]
+            if ($passwordHistorySize -lt 24) {
+                Set-ADDefaultDomainPasswordPolicy -PasswordHistorySize 24
+            }
+        }
+      when: policy_output.stdout_lines[0] is match('Passw
