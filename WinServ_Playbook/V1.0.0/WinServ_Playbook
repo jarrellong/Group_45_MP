@@ -1,0 +1,59 @@
+--- 
+
+- name: Create new Active-Directory Domain & Forest 
+  hosts: winserv
+  vars:
+    dc_address: 192.168.1.3 # This is the local machine (the server you want to promote to AD)
+    dc_netmask_cidr: 24
+    dc_hostname: 'win-serv'
+    recovery_password: "{{ adadmpass }}"
+    admin_username: "{{ adadmuser }}"
+    admin_password: "{{ adadmpass }}"
+    user_username: "{{ aduseruser }}"
+    user_password: "{{ aduserpass }}"
+    domain_name: "mp45local.tp"
+    upstream_dns_1: 8.8.8.8
+    upstream_dns_2: 8.8.4.4
+  gather_facts: no
+
+  tasks:
+
+  - name: Install Active Directory #Install Active Directory Service
+    win_feature: >
+         name=AD-Domain-Services
+         include_management_tools=yes
+         include_sub_features=yes
+         state=present
+    register: result
+    delegate_to: '{{ dc_address }}' 
+  - name: Create Domain
+    win_domain: >
+       dns_domain_name='{{ domain_name }}'
+       safe_mode_password='{{ recovery_password }}'
+    register: ad
+    delegate_to: "{{ dc_address }}"
+  - name: reboot server
+    win_reboot:
+     msg: "Installing AD. Rebooting..."
+     pre_reboot_delay: 15
+    when: ad.changed
+    delegate_to: "{{ dc_address }}"
+
+  - name: Set upstream DNS server 
+    win_dns_client:
+      adapter_names: '*'
+      ipv4_addresses:
+      - '{{ upstream_dns_1 }}'
+      - '{{ upstream_dns_2 }}'
+    delegate_to: '{{ dc_address }}'
+
+  - name: Create User
+    community.windows.win_domain_user:
+      name: '{{ aduseruser }}'
+      firstname: Domain
+      surname: User
+      password: '{{ aduserpass }}'
+      state: present
+      domain_username: 'MP45LOCAL\{{ adadmuser }}'
+      domain_password: '{{ adadmpass }}'
+      domain_server: '{{ domain_name }}'

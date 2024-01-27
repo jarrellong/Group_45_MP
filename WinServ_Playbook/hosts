@@ -1,0 +1,14 @@
+[centos]
+192.168.1.2
+
+[webservers]
+
+[dbservers]
+
+[winserv]
+192.168.1.3 
+
+[winserv:vars]
+ansible_connection=winrm
+ansible_winrm_server_cert_validation=ignore
+ansible_port=5986
