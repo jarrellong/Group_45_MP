@@ -22,7 +22,7 @@
 
     - name: Set Password History result
       set_fact:
-        pwhist_message: "{{ 'Password History Size is set to 24 or better (Pass)' if pwhist_policy == true else 'Password History Size was NOT set to 24 or better (Rectified)' }}"
+        pwhist_message: "{{ 'Password History Size is set to 24 or better -- [Pass]' if pwhist_policy == true else 'Password History Size was NOT set to 24 or better -- [Rectified]' }}"
 
     - name: Set PasswordHistorySize to 24
       win_shell: |
@@ -35,7 +35,7 @@
 
     - name: Set MaxPasswordAge result
       set_fact:
-        pwmax_message: "{{ 'Maximum Password Age is set to 365 or less (Pass)' if pwmax_policy == true else 'PMaximum Password Age was NOT set to 365 or less (Rectified)' }}"
+        pwmax_message: "{{ 'Maximum Password Age is set to 365 or less -- [Pass]' if pwmax_policy == true else 'PMaximum Password Age was NOT set to 365 or less -- [Rectified]' }}"
    
     - name: Set PasswordMaxAge to 365
       win_shell: |
@@ -48,7 +48,7 @@
 
     - name: Set MinPasswordAge result
       set_fact:
-        pwmin_message: "{{ 'Minimum Password Age is set to 1 or more (Pass)' if pwmin_policy == true else 'Minimum Password Age was NOT set to 1 or more (Rectified)' }}"
+        pwmin_message: "{{ 'Minimum Password Age is set to 1 or more -- [Pass]' if pwmin_policy == true else 'Minimum Password Age was NOT set to 1 or more -- [Rectified]' }}"
    
     - name: Set MinPasswordAge to 1
       win_shell: |
@@ -61,7 +61,7 @@
 
     - name: Set MinPasswordLength result
       set_fact:
-        pwminl_message: "{{ 'Minimum Password Length is set to 14 or more (Pass)' if pwminl_policy == true else 'Minimum Password Length was NOT set to 14 or more (Rectified)' }}"
+        pwminl_message: "{{ 'Minimum Password Length is set to 14 or more -- [Pass]' if pwminl_policy == true else 'Minimum Password Length was NOT set to 14 or more -- [Rectified]' }}"
    
     - name: Set MinPasswordLength to 14
       win_shell: |
@@ -74,12 +74,16 @@
 
     - name: Set LockoutThreshold result
       set_fact:
-        locktr_message: "{{ 'LockoutThreshold is set to 3 or less but not 0 (Pass)' if locktr_policy == true else 'LockoutThreshold is NOT set to 3 or less but not 0 (Rectified)' }}"
-   
+        locktr_message: "{{ 'LockoutThreshold is set to 3 or less but not 0 -- [Pass]' if locktr_policy == true else 'LockoutThreshold is NOT set to 3 or less but not 0 -- [Rectified]' }}"
+
     - name: Set LockoutThreshold to 3
       win_shell: |
         Set-ADDefaultDomainPasswordPolicy -Identity {{ domain }} -LockoutThreshold 3
       when: locktr_policy == false
+
+    - name: Display pwhist_message
+      debug:
+        msg: "{{ pwhist_message }}"
 
     - name: Display pwmax_message
       debug:
@@ -93,11 +97,16 @@
       debug:
         msg: "{{ pwminl_message }}"
 
-    - name: Display pwminl_message
+    - name: Display locktr_message
       debug:
-        msg: "{{ pwminl_message }}"
+        msg: "{{ locktr_message }}"
 
-
-
+    - name: Execute the Telegram command
+      shell: |
+        msg="CIS Benchmark triggered by build. \n\n Results for Windows Server 2022 on 192.168.1.3: \n\n {{ pwhist_message }} \n\n {{ pwmax_message }} \n\n {{ pwmin_message }} \n\n {{ pwminl_message }} \n\n {{ locktr_message }}"
+        curl -X POST -H 'Content-Type: application/json' -d "{\"chat_id\": \"6680816225\", \"text\": \"$msg\", \"disable_notification\": true}" https://api.telegram.org/bot6964667296:AAF8Bv8XibWEPeQ4CQCL5htOfEVJTrffhHs/sendMessage
+      args:
+        executable: /bin/bash
+      delegate_to: localhost
 
 
