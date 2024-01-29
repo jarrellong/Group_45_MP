@@ -6,7 +6,7 @@ pipeline {
         adadmpass = ""
         aduseruser = ""
         aduserpass = ""
-        changelog = "This is an initial build"
+        changelog = "Created domain for Windows Server 2022"
         branch = "CSR1000V-Development"
         // Define the version number
         version = "V1.0.0"
@@ -15,6 +15,7 @@ pipeline {
         githubRepoURL = "https://github.com/ZeroSighs/Group_45_MP.git"
         // Define the file path within the repository
         pbfilePath = "${WORKSPACE}/WinServ_Playbook/${version}/WinServ_Playbook.yml"
+        cisfilePath = "${WORKSPACE}/WinServ_Playbook/${version}/WinServ_CIS.yml"
         htfilePath = "${WORKSPACE}/WinServ_Playbook/hosts"
         githubCredentialsId = 'gitlol'
         builderror = false
@@ -45,6 +46,8 @@ pipeline {
                     dir("WinServ_Playbook/${version}") {
                         sh "cat WinServ_Playbook.yml"  // Display the content of the playbook file
                         sh "cp WinServ_Playbook.yml ${WORKSPACE}/WinServ_Playbook.yml"
+                        sh "cat WinServ_CIS.yml"  // Display the content of the playbook file
+                        sh "cp WinServ_CIS.yml ${WORKSPACE}/WinServ_CIS.yml"
                     }
                     sh "cat WinServ_Playbook/hosts"
                     sh "cp WinServ_Playbook/hosts ${WORKSPACE}/hosts" // Display the content of the hosts file
@@ -57,7 +60,26 @@ pipeline {
                     ansiblePlaybook([extraVars: [adadmuser: "${adadmuser}", adadmpass: "${adadmpass}", aduseruser: "${aduseruser}", aduserpass: "${aduserpass}", ansible_user: "${adadmuser}", ansible_password: "${adadmpass}"], disableHostKeyChecking: true, installation: 'Ansible', inventory: 'hosts', playbook: 'WinServ_Playbook.yml', vaultTmpPath: ''])
                 }
             }
-        }    
+        }  
+        stage('Perform Security Tests') {
+            steps {
+                script {
+                    ansiblePlaybook([extraVars: [ansible_user: "${adadmuser}", ansible_password: "${adadmpass}"], disableHostKeyChecking: true, installation: 'Ansible', inventory: 'hosts', playbook: 'WinServ_CIS.yml', vaultTmpPath: ''])
+                }
+            }
+        }
+        stage('Success Notification') {
+            when {
+                expression { currentBuild.resultIsBetterOrEqualTo('SUCCESS') }
+            }
+            steps {
+                script {
+                    msg = "New successful build on Branch $branch \n Build Number: ${currentBuild.number} \n Start Time: ${new Date(currentBuild.startTimeInMillis)} \n Build Duration: ${currentBuild.duration} ms \n Changelog: $changelog"
+                    sh "curl -X POST -H 'Content-Type: application/json' -d '{\"chat_id\": \"6680816225\", \"text\": \"$msg\", \"disable_notification\": true}' https://api.telegram.org/bot6964667296:AAF8Bv8XibWEPeQ4CQCL5htOfEVJTrffhHs/sendMessage"
+                    }
+                    
+                }
+            }
     }  
 }
         
