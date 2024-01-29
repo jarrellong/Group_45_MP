@@ -1,8 +1,11 @@
 ---
 - name: Check Domain Password Policy
-  hosts: your_windows_server
+  hosts: winserv
   gather_facts: true
+  vars:
+    domain: mp45local.tp
   tasks:
+
     - name: Get domain password policy settings
       win_shell: |
         $policy = Get-ADDefaultDomainPasswordPolicy
@@ -15,13 +18,86 @@
 
     - name: Check if PasswordHistorySize is 24 or greater
       set_fact:
-        pwpolicyfailed: "{{ policy_output.stdout_lines[0] | regex_search('PasswordHistoryCount\\s*:\\s*(\\d+)') | int < 24 }}"
+        pwhist_policy: "{{ policy_output.stdout_lines | regex_search('PasswordHistoryCount\\s*:\\s*(\\d+)', '\\1') | first | int >= 24 }}"
 
-- name: Change PasswordHistorySize to 24
-  hosts: your_windows_server
-  gather_facts: true
-  tasks:
+    - name: Set Password History result
+      set_fact:
+        pwhist_message: "{{ 'Password History Size is set to 24 or better (Pass)' if pwhist_policy == true else 'Password History Size was NOT set to 24 or better (Rectified)' }}"
+
     - name: Set PasswordHistorySize to 24
       win_shell: |
-        Set-ADDefaultDomainPasswordPolicy -PasswordHistoryCount 24
-      when: pwpolicyfailed | default(false)
+        Set-ADDefaultDomainPasswordPolicy -Identity {{ domain }} -PasswordHistoryCount 24
+      when: pwhist_policy == false
+
+    - name: Check if MaxPasswordAge is 365 days or less
+      set_fact:
+        pwmax_policy: "{{ policy_output.stdout_lines | regex_search('MaxPasswordAge\\s*:\\s*(\\d+)', '\\1') | first | int <= 365 }}"
+
+    - name: Set MaxPasswordAge result
+      set_fact:
+        pwmax_message: "{{ 'Maximum Password Age is set to 365 or less (Pass)' if pwmax_policy == true else 'PMaximum Password Age was NOT set to 365 or less (Rectified)' }}"
+   
+    - name: Set PasswordMaxAge to 365
+      win_shell: |
+        Set-ADDefaultDomainPasswordPolicy -Identity {{ domain }} -MaxPasswordAge 365:00:00:00
+      when: pwmax_policy == false
+
+    - name: Check if MinPasswordAge is 1 day or more
+      set_fact:
+        pwmin_policy: "{{ policy_output.stdout_lines | regex_search('MinPasswordAge\\s*:\\s*(\\d+)', '\\1') | first | int >= 1 }}"
+
+    - name: Set MinPasswordAge result
+      set_fact:
+        pwmin_message: "{{ 'Minimum Password Age is set to 1 or more (Pass)' if pwmin_policy == true else 'Minimum Password Age was NOT set to 1 or more (Rectified)' }}"
+   
+    - name: Set MinPasswordAge to 1
+      win_shell: |
+        Set-ADDefaultDomainPasswordPolicy -Identity {{ domain }} -MinPasswordAge 1:00:00:00
+      when: pwmin_policy == false
+    
+    - name: Check if MinPasswordLength is 14 characters or more
+      set_fact:
+        pwminl_policy: "{{ policy_output.stdout_lines | regex_search('MinPasswordLength\\s*:\\s*(\\d+)', '\\1') | first | int >= 14 }}"
+
+    - name: Set MinPasswordLength result
+      set_fact:
+        pwminl_message: "{{ 'Minimum Password Length is set to 14 or more (Pass)' if pwminl_policy == true else 'Minimum Password Length was NOT set to 14 or more (Rectified)' }}"
+   
+    - name: Set MinPasswordLength to 14
+      win_shell: |
+        Set-ADDefaultDomainPasswordPolicy -Identity {{ domain }} -MinPasswordLength 14
+      when: pwminl_policy == false
+
+    - name: Check if LockoutThreshold is 3 or less but not 0
+      set_fact:
+        locktr_policy: "{{ policy_output.stdout_lines | regex_search('LockoutThreshold\\s*:\\s*(\\d+)', '\\1') | first | int <= 3 and policy_output.stdout_lines | regex_search('LockoutThreshold\\s*:\\s*(\\d+)', '\\1') | first | int > 0}}"
+
+    - name: Set LockoutThreshold result
+      set_fact:
+        locktr_message: "{{ 'LockoutThreshold is set to 3 or less but not 0 (Pass)' if locktr_policy == true else 'LockoutThreshold is NOT set to 3 or less but not 0 (Rectified)' }}"
+   
+    - name: Set LockoutThreshold to 3
+      win_shell: |
+        Set-ADDefaultDomainPasswordPolicy -Identity {{ domain }} -LockoutThreshold 3
+      when: locktr_policy == false
+
+    - name: Display pwmax_message
+      debug:
+        msg: "{{ pwmax_message }}"
+
+    - name: Display pwmin_message
+      debug:
+        msg: "{{ pwmin_message }}"
+
+    - name: Display pwminl_message
+      debug:
+        msg: "{{ pwminl_message }}"
+
+    - name: Display pwminl_message
+      debug:
+        msg: "{{ pwminl_message }}"
+
+
+
+
+
